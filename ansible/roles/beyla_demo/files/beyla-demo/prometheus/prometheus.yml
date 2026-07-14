@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'beyla-frontend'
+    static_configs:
+      - targets: ['beyla-frontend:9400']
+
+  - job_name: 'beyla-backend'
+    static_configs:
+      - targets: ['beyla-backend:9401']

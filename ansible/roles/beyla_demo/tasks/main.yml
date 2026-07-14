@@ -1,0 +1,78 @@
+---
+- name: Install prerequisites for Docker's apt repo
+  apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Create keyring directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Add Docker's official GPG key
+  get_url:
+    url: https://download.docker.com/linux/debian/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+  become: true
+
+- name: Add Docker's apt repository
+  apt_repository:
+    repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker
+  become: true
+
+- name: Install Docker Engine and Compose plugin
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Ensure Docker service is running
+  service:
+    name: docker
+    state: started
+    enabled: true
+  become: true
+
+- name: Create deployment directory
+  file:
+    path: /opt/beyla-demo
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Copy Beyla demo project files
+  copy:
+    src: beyla-demo/
+    dest: /opt/beyla-demo/
+    mode: preserve
+  become: true
+
+- name: Build and start the stack
+  community.docker.docker_compose_v2:
+    project_src: /opt/beyla-demo
+    state: present
+  become: true
+
+- name: Generate some traffic so Beyla/Prometheus have data
+  uri:
+    url: "http://localhost:8000/order"
+    method: GET
+    status_code: [200, 500]
+  loop: "{{ range(1, 51) | list }}"
+  become: true

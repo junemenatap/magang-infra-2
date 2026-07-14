@@ -1,0 +1,33 @@
+# --- Secrets: NEVER commit these ---
+*.json
+!package.json
+!package-lock.json
+*_key
+*_key.pub
+*.pem
+*.ppk
+gcp_ssh_key*
+
+# --- Terraform ---
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfvars
+crash.log
+crash.*.log
+
+# --- Logs / run output ---
+*.log
+healthcheck-*.txt
+
+# --- OS / editor junk ---
+.DS_Store
+*.swp
+*#Uf03aZone.Identifier
+
+# --- Python (if any venvs get created here) ---
+__pycache__/
+*.pyc
+.venv/
+venv/

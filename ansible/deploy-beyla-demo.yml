@@ -1,0 +1,5 @@
+---
+- name: Deploy Beyla two-service eBPF demo
+  hosts: gcp_servers
+  roles:
+    - beyla_demo

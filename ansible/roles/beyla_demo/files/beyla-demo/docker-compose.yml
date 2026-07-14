@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+  frontend-api:
+    build: ./frontend-api
+    environment:
+      BACKEND_URL: http://backend-api:8001
+    ports:
+      - "8000:8000"
+
+  backend-api:
+    build: ./backend-api
+    ports:
+      - "8001:8001"
+
+  beyla-frontend:
+    image: grafana/beyla:latest
+    pid: "service:frontend-api"
+    privileged: true
+    environment:
+      BEYLA_OPEN_PORT: 8000
+      BEYLA_PROMETHEUS_PORT: 9400
+      BEYLA_SERVICE_NAME: frontend-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+    ports:
+      - "9400:9400"
+    depends_on:
+      - frontend-api
+      - tempo
+
+  beyla-backend:
+    image: grafana/beyla:latest
+    pid: "service:backend-api"
+    privileged: true
+    environment:
+      BEYLA_OPEN_PORT: 8001
+      BEYLA_PROMETHEUS_PORT: 9401
+      BEYLA_SERVICE_NAME: backend-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+    ports:
+      - "9401:9401"
+    depends_on:
+      - backend-api
+      - tempo
+
+  tempo:
+    image: grafana/tempo:2.10.7
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - beyla-frontend
+      - beyla-backend
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+    depends_on:
+      - prometheus
