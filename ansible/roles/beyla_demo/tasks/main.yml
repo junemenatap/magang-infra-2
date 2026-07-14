@@ -76,3 +76,22 @@
     status_code: [200, 500]
   loop: "{{ range(1, 51) | list }}"
   become: true
+
+- name: Install networking utilities
+  apt:
+    name:
+      - dnsutils
+      - wget
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Install eBPF tracing tools
+  apt:
+    name:
+      - bpfcc-tools
+      - "linux-headers-{{ ansible_kernel }}"
+      - bpftool
+      - bpftrace
+    state: present
+  become: true
