@@ -9,3 +9,7 @@ scrape_configs:
   - job_name: 'beyla-backend'
     static_configs:
       - targets: ['beyla-backend:9401']
+  
+  - job_name: 'ebpf-exporter'
+    static_configs:
+      - targets: ['host.docker.internal:9435']

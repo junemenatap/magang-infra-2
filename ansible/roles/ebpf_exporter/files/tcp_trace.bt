@@ -1,0 +1,78 @@
+#!/usr/bin/env bpftrace
+/*
+ * tcp_trace.bt
+ *
+ * Kernel-level TCP observability that Dynatrace OneAgent and ELK/Packetbeat
+ * cannot give you cheaply:
+ *   - real SYN->ESTABLISHED latency, measured in the kernel (not app timers)
+ *   - retransmission events attributed to PID/comm/destination
+ *   - connection close events (ESTABLISHED -> CLOSE) for lifecycle tracking
+ *
+ * Output format: pipe-delimited lines, one event per line, prefixed with
+ * an event type tag. The Python exporter (exporter.py) parses this stdout
+ * and turns it into Prometheus metrics.
+ *
+ * TCP state constants (from include/net/tcp_states.h):
+ *   TCP_ESTABLISHED = 1
+ *   TCP_SYN_SENT    = 2
+ *   TCP_SYN_RECV    = 3
+ *   TCP_FIN_WAIT1   = 4
+ *   TCP_FIN_WAIT2   = 5
+ *   TCP_TIME_WAIT   = 6
+ *   TCP_CLOSE       = 7
+ *   TCP_CLOSE_WAIT  = 8
+ *   TCP_LAST_ACK    = 9
+ *   TCP_LISTEN      = 10
+ *   TCP_CLOSING     = 11
+ *
+ * Run directly for testing:
+ *   sudo bpftrace tcp_trace.bt
+ *
+ * Run via the exporter (recommended, this is what runs in production):
+ *   sudo python3 exporter.py
+ */
+
+BEGIN
+{
+    printf("READY|tcp_trace started\n");
+}
+
+// Mark the timestamp when a socket enters SYN_SENT (outbound connect attempt)
+tracepoint:sock:inet_sock_set_state
+/args->newstate == 2/
+{
+    @syn_ts[args->skaddr] = nsecs;
+}
+
+// When that same socket reaches ESTABLISHED, compute real kernel-level
+// connect latency. This bypasses whatever the application *thinks*
+// the connect took (which can be skewed by app-level queuing/threading).
+tracepoint:sock:inet_sock_set_state
+/args->newstate == 1 && @syn_ts[args->skaddr] != 0/
+{
+    $latency_ns = nsecs - @syn_ts[args->skaddr];
+    printf("CONNECT_LATENCY|%d|%s|%llu|%s|%d\n",
+        pid, comm, $latency_ns, ntop(args->daddr), args->dport);
+    delete(@syn_ts[args->skaddr]);
+}
+
+// Retransmission events: strong signal of network-layer trouble that
+// never shows up in application logs or Dynatrace transaction traces.
+tracepoint:tcp:tcp_retransmit_skb
+{
+    printf("RETRANSMIT|%d|%s|%s|%d\n",
+        pid, comm, ntop(args->daddr), args->dport);
+}
+
+// Connection lifecycle: ESTABLISHED -> CLOSE
+tracepoint:sock:inet_sock_set_state
+/args->oldstate == 1 && args->newstate == 7/
+{
+    printf("CONN_CLOSE|%d|%s|%s|%d\n",
+        pid, comm, ntop(args->daddr), args->dport);
+}
+
+END
+{
+    clear(@syn_ts);
+}

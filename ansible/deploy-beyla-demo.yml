@@ -3,3 +3,4 @@
   hosts: gcp_servers
   roles:
     - beyla_demo
+    - ebpf_exporter

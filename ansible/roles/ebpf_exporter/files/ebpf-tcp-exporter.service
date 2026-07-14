@@ -1,0 +1,20 @@
+[Unit]
+Description=eBPF TCP observability exporter (bpftrace -> Prometheus)
+After=network.target
+
+[Service]
+Type=simple
+# bpftrace needs root (or CAP_BPF/CAP_SYS_ADMIN depending on kernel) to
+# attach tracepoints. Simplest for a demo/internal box is root.
+User=root
+WorkingDirectory=/opt/ebpf-tcp-observability
+ExecStart=/usr/bin/python3 /opt/ebpf-tcp-observability/exporter.py
+Restart=on-failure
+RestartSec=5
+# bpftrace can be noisy on stderr (warnings about missing debug symbols
+# etc.) -- keep it in the journal for troubleshooting.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

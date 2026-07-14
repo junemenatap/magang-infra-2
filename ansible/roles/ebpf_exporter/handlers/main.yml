@@ -1,0 +1,7 @@
+---
+- name: restart ebpf-tcp-exporter
+  systemd:
+    daemon_reload: yes
+    name: ebpf-tcp-exporter
+    state: restarted
+  become: true

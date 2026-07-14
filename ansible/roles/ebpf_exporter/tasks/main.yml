@@ -1,0 +1,62 @@
+---
+# ansible/roles/ebpf_tcp_exporter/tasks/main.yml
+#
+# Note: beyla_demo's role already installs bpftrace + linux-headers as part
+# of its "Install eBPF tracing tools" task, so this is technically
+# redundant if that role runs first in the same play -- but kept here so
+# this role stays self-contained and can be applied to a host on its own.
+
+- name: Install bpftrace and pip
+  apt:
+    name:
+      - bpftrace
+      - python3-pip
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Install prometheus_client for the exporter
+  pip:
+    name: prometheus_client
+    executable: pip3
+  become: true
+
+- name: Create exporter directory
+  file:
+    path: /opt/ebpf-tcp-observability
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Copy exporter files
+  copy:
+    src: "{{ item }}"
+    dest: "/opt/ebpf-tcp-observability/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - tcp_trace.bt
+    - exporter.py
+  become: true
+  notify: restart ebpf-tcp-exporter
+
+- name: Install systemd unit
+  copy:
+    src: ebpf-tcp-exporter.service
+    dest: /etc/systemd/system/ebpf-tcp-exporter.service
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: restart ebpf-tcp-exporter
+
+- name: Ensure exporter is enabled and running
+  systemd:
+    name: ebpf-tcp-exporter
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true
