@@ -1,5 +1,8 @@
 version: "3.8"
 
+volumes:
+  loki-data:
+
 services:
   frontend-api:
     build: ./frontend-api
@@ -74,8 +77,11 @@ services:
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+    volumes:
+      - ./datasources:/etc/datasources
     depends_on:
       - prometheus
+      - loki
 
   ebpf-metrics-exporter:
     image: ghcr.io/cloudflare/ebpf_exporter:v2.4.0
@@ -90,3 +96,21 @@ services:
       - "9436:9435"   # host:container — 9436 so it never collides with your
                       # host-native TCP exporter, which already owns 9435
     restart: unless-stopped
+  
+  loki:
+    image: grafana/loki:3.7.0
+    command: ["-config.file=/etc/loki/loki-config.yaml"]
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    command: ["-config.file=/etc/promtail/promtail-config.yaml"]
+    volumes:
+      - ./promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml
+      - /var/log/ebpf:/var/log/ebpf:ro
+    depends_on:
+      - loki

@@ -1,0 +1,28 @@
+#!/usr/bin/env bpftrace
+
+// execsnoop.bt - Trace new processes via exec() syscalls.
+// Adapted for Debian 11's bpftrace v0.11.3:
+//   - no strftime()   -> uses elapsed time instead
+//   - no ppid builtin, and curtask->real_parent->tgid proved unreliable
+//     on this kernel (no BTF -> wrong struct offsets from the generic
+//     compat header) -> instead we record the parent pid at fork()
+//     time via the sched_process_fork tracepoint's own fields, which
+//     are stable kernel ABI, not raw struct layout guesswork.
+//   - args.field dot syntax -> args->field arrow syntax
+
+tracepoint:sched:sched_process_fork
+{
+    @ppid[args->child_pid] = args->parent_pid;
+}
+
+BEGIN
+{
+    printf("%-15s %-7s %-7s %s\n", "TIME(ms)", "PID", "PPID", "ARGS");
+}
+
+tracepoint:syscalls:sys_enter_exec*
+{
+    printf("%-15d %-7d %-7d ", elapsed / 1000000, pid, @ppid[pid]);
+    join(args->argv);
+    delete(@ppid[pid]);
+}

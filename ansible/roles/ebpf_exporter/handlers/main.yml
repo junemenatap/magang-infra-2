@@ -5,3 +5,10 @@
     name: ebpf-tcp-exporter
     state: restarted
   become: true
+
+- name: restart ebpf-execsnoop
+  systemd:
+    daemon_reload: yes
+    name: ebpf-execsnoop
+    state: restarted
+  become: true

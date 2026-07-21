@@ -60,3 +60,47 @@
     state: started
     daemon_reload: yes
   become: true
+
+- name: Create log directory for eBPF snoop tools
+  file:
+    path: /var/log/ebpf
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Create execsnoop directory
+  file:
+    path: /opt/ebpf-snoop-tools
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Copy execsnoop bpftrace script
+  copy:
+    src: execsnoop.bt
+    dest: /opt/ebpf-snoop-tools/execsnoop.bt
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  notify: restart ebpf-execsnoop
+
+- name: Install execsnoop systemd unit
+  copy:
+    src: ebpf-execsnoop.service
+    dest: /etc/systemd/system/ebpf-execsnoop.service
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: restart ebpf-execsnoop
+
+- name: Ensure execsnoop is enabled and running
+  systemd:
+    name: ebpf-execsnoop
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true

@@ -56,6 +56,13 @@
     mode: "0755"
   become: true
 
+- name: Create log dir for eBPF snoopers
+  file:
+    path: /var/log/ebpf
+    state: directory
+    mode: "0755"
+  become: true
+
 - name: Copy Beyla demo project files
   copy:
     src: beyla-demo/
