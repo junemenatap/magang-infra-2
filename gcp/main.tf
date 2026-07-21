@@ -63,5 +63,5 @@ resource "local_file" "gcp_inventory" {
 [gcp_servers]
 gcp_vm ansible_host=${google_compute_instance.vm_instance.network_interface.0.access_config.0.nat_ip} ansible_user=${var.ssh_user} ansible_ssh_private_key_file=./gcp/gcp_ssh_key
 EOT
-  filename = "../inventories/gcp.ini"
+  filename = "../ansible/inventories/gcp.ini"
 }

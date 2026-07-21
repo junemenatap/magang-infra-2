@@ -10,6 +10,10 @@ scrape_configs:
     static_configs:
       - targets: ['beyla-backend:9401']
   
-  - job_name: 'ebpf-exporter'
-    static_configs:
-      - targets: ['host.docker.internal:9435']
+  - job_name: 'ebpf-tcp-exporter'          # renamed from 'ebpf-exporter' for clarity —
+    static_configs:                        # this is your bpftrace/Python TCP tracer,
+      - targets: ['host.docker.internal:9435']   # running host-native, not in compose
+
+  - job_name: 'ebpf-bcc-exporter'          # NEW — Cloudflare exporter, same compose network,
+    static_configs:                        # so we address it by service name, not host.docker.internal
+      - targets: ['ebpf-metrics-exporter:9435']

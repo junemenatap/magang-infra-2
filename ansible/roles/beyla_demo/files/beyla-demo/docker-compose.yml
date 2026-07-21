@@ -76,3 +76,17 @@ services:
       GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
     depends_on:
       - prometheus
+
+  ebpf-metrics-exporter:
+    image: ghcr.io/cloudflare/ebpf_exporter:v2.4.0
+    container_name: ebpf-metrics-exporter
+    privileged: true
+    pid: host
+    command: ["--config.dir=examples", "--config.names=biolatency,cachestat-pre-kernel-5.16"]
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /sys/kernel/debug:/sys/kernel/debug:rw
+    ports:
+      - "9436:9435"   # host:container — 9436 so it never collides with your
+                      # host-native TCP exporter, which already owns 9435
+    restart: unless-stopped
