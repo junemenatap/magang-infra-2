@@ -14,7 +14,7 @@ resource "google_compute_subnetwork" "network_subnet" {
 # VM
 resource "google_compute_instance" "vm_instance" {
     name = var.instance_name
-    machine_type = "e2-standard-2" 
+    machine_type = "e2-medium" 
     zone = "${var.gcp_region}-b"
     tags = ["allow-ssh"]
 

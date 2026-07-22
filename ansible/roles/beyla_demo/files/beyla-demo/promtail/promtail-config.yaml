@@ -9,10 +9,33 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: ebpf-snoop-tools
+  - job_name: ebpf-execsnoop
     static_configs:
       - targets:
           - localhost
         labels:
           job: ebpf-snoop
-          __path__: /var/log/ebpf/*.log
+          tool: execsnoop
+          __path__: /var/log/ebpf/execsnoop.log
+
+  - job_name: ebpf-opensnoop
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: ebpf-snoop
+          tool: opensnoop
+          __path__: /var/log/ebpf/opensnoop.log
+
+  - job_name: systemd-journal
+    journal:
+      max_age: 12h
+      path: /var/log/journal
+      labels:
+        job: ebpf-snoop-health
+    relabel_configs:
+      - source_labels: ['__journal__systemd_unit']
+        target_label: 'unit'
+      - source_labels: ['unit']
+        regex: 'ebpf-(execsnoop|opensnoop)\.service'
+        action: keep

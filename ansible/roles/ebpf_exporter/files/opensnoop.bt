@@ -1,0 +1,38 @@
+#!/usr/bin/env bpftrace
+
+// opensnoop.bt - Trace open()/openat() syscalls: which process opened
+// which file, and whether it succeeded.
+//
+// Adapted for Debian 11's bpftrace v0.11.3:
+//   - args.field dot syntax -> args->field arrow syntax
+//   - string map used as a bare predicate (/@filename[tid]/) isn't
+//     supported -> moved inside the block as an explicit != "" check
+
+BEGIN
+{
+    printf("%-6s %-6s %-16s %4s %3s %s\n", "PID", "UID", "COMM", "FD", "ERR", "PATH");
+}
+
+tracepoint:syscalls:sys_enter_open,
+tracepoint:syscalls:sys_enter_openat
+{
+    @filename[tid] = str(args->filename);
+}
+
+tracepoint:syscalls:sys_exit_open,
+tracepoint:syscalls:sys_exit_openat
+{
+    if (@filename[tid] != "") {
+        $ret = args->ret;
+        $fd = $ret >= 0 ? $ret : -1;
+        $errno = $ret >= 0 ? 0 : - $ret;
+
+        printf("%-6d %-6d %-16s %4d %3d %s\n", pid, uid, comm, $fd, $errno, @filename[tid]);
+        delete(@filename[tid]);
+    }
+}
+
+END
+{
+    clear(@filename);
+}

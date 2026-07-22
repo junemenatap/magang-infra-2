@@ -104,3 +104,31 @@
     state: started
     daemon_reload: yes
   become: true
+
+- name: Copy opensnoop bpftrace script
+  copy:
+    src: opensnoop.bt
+    dest: /opt/ebpf-snoop-tools/opensnoop.bt
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  notify: restart ebpf-opensnoop
+
+- name: Install opensnoop systemd unit
+  copy:
+    src: ebpf-opensnoop.service
+    dest: /etc/systemd/system/ebpf-opensnoop.service
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: restart ebpf-opensnoop
+
+- name: Ensure opensnoop is enabled and running
+  systemd:
+    name: ebpf-opensnoop
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true

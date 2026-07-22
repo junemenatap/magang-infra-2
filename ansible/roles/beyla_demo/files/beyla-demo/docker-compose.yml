@@ -107,10 +107,14 @@ services:
       - "3100:3100"
 
   promtail:
+    user: root
     image: grafana/promtail:3.0.0
     command: ["-config.file=/etc/promtail/promtail-config.yaml"]
     volumes:
       - ./promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml
       - /var/log/ebpf:/var/log/ebpf:ro
+      - /var/log/journal:/var/log/journal:ro
+      - /run/log/journal:/run/log/journal:ro
+      - /etc/machine-id:/etc/machine-id:ro
     depends_on:
       - loki

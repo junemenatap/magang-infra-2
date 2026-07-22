@@ -1,0 +1,15 @@
+[Unit]
+Description=eBPF opensnoop tracer (bpftrace -> log file for Loki/Promtail)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/stdbuf -oL /usr/bin/bpftrace -q /opt/ebpf-snoop-tools/opensnoop.bt
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/var/log/ebpf/opensnoop.log
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

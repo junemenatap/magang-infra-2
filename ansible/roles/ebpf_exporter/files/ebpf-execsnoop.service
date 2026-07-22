@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/bin/stdbuf -oL /usr/bin/bpftrace /opt/ebpf-snoop-tools/execsnoop.bt
+ExecStart=/usr/bin/stdbuf -oL /usr/bin/bpftrace -q /opt/ebpf-snoop-tools/execsnoop.bt
 Restart=on-failure
 RestartSec=5
 StandardOutput=append:/var/log/ebpf/execsnoop.log

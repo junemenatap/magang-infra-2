@@ -1,14 +1,18 @@
 #!/usr/bin/env bpftrace
 
-// execsnoop.bt - Trace new processes via exec() syscalls.
-// Adapted for Debian 11's bpftrace v0.11.3:
-//   - no strftime()   -> uses elapsed time instead
-//   - no ppid builtin, and curtask->real_parent->tgid proved unreliable
-//     on this kernel (no BTF -> wrong struct offsets from the generic
-//     compat header) -> instead we record the parent pid at fork()
-//     time via the sched_process_fork tracepoint's own fields, which
-//     are stable kernel ABI, not raw struct layout guesswork.
+// execsnoop.bt - Trace new processes via exec() syscalls, with UID and
+// failed-exec detection.
+//
+// Adapted for Debian 11's bpftrace v0.11.3, which lacks:
+//   - strftime()          -> uses elapsed time instead
+//   - the ppid builtin, and raw task_struct reads proved unreliable
+//     without BTF -> ppid comes from sched_process_fork instead
 //   - args.field dot syntax -> args->field arrow syntax
+//
+// Known limitation: @ppid isn't deleted per-event (a single PID can call
+// execve() multiple times in a row via PATH-search retries -- deleting
+// after the first lookup broke PPID for the retries). Instead it's
+// garbage-collected periodically below.
 
 tracepoint:sched:sched_process_fork
 {
@@ -17,12 +21,29 @@ tracepoint:sched:sched_process_fork
 
 BEGIN
 {
-    printf("%-15s %-7s %-7s %s\n", "TIME(ms)", "PID", "PPID", "ARGS");
+    printf("%-15s %-7s %-7s %-6s %s\n", "TIME(ms)", "PID", "PPID", "UID", "ARGS");
 }
 
 tracepoint:syscalls:sys_enter_exec*
 {
-    printf("%-15d %-7d %-7d ", elapsed / 1000000, pid, @ppid[pid]);
+    printf("%-15d %-7d %-7d %-6d ", elapsed / 1000000, pid, @ppid[pid], uid);
     join(args->argv);
-    delete(@ppid[pid]);
+}
+
+tracepoint:syscalls:sys_exit_exec*
+{
+    if (args->ret < 0) {
+        printf("%-15d %-7d %-7d %-6d [EXEC FAILED, ret=%d] %s\n",
+            elapsed / 1000000, pid, @ppid[pid], uid, args->ret, comm);
+    }
+}
+
+interval:s:60
+{
+    clear(@ppid);
+}
+
+END
+{
+    clear(@ppid);
 }

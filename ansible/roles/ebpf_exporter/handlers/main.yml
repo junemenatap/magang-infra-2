@@ -12,3 +12,10 @@
     name: ebpf-execsnoop
     state: restarted
   become: true
+
+- name: restart ebpf-opensnoop
+  systemd:
+    daemon_reload: yes
+    name: ebpf-opensnoop
+    state: restarted
+  become: true
