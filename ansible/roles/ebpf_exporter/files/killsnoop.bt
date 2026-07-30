@@ -1,0 +1,59 @@
+#!/usr/bin/env bpftrace
+
+// killsnoop.bt - Trace signals sent via kill() and tgkill() syscalls:
+// who sent what signal to which target, and whether it succeeded.
+//
+// Adapted for Debian 11's bpftrace v0.11.3, same fixes learned from
+// execsnoop/opensnoop:
+//   - args.field dot syntax -> args->field arrow syntax
+//   - no strftime() -> elapsed time instead
+//   - kill() and tgkill() traced in separate probe blocks rather than
+//     combined, since tgkill()'s "pid" arg (target thread) means
+//     something different from kill()'s "pid" (target process) --
+//     combining them risked silently mislabeling the target
+//
+// Known limitation: if bpftrace starts mid-syscall (only possible in
+// the first instant after startup), the first sys_exit for a given
+// thread may print sig=0/tpid=0 with no matching sys_enter seen yet --
+// same category of edge case as execsnoop's @ppid handling.
+
+tracepoint:syscalls:sys_enter_kill
+{
+    @kill_sig[tid] = args->sig;
+    @kill_tpid[tid] = args->pid;
+}
+
+BEGIN
+{
+    printf("%-15s %-7s %-16s %-6s %-6s %-7s %s\n", "TIME(ms)", "PID", "COMM", "UID", "SIG", "TPID", "RES");
+}
+
+tracepoint:syscalls:sys_exit_kill
+{
+    printf("%-15d %-7d %-16s %-6d %-6d %-7d %d\n",
+        elapsed / 1000000, pid, comm, uid, @kill_sig[tid], @kill_tpid[tid], args->ret);
+    delete(@kill_sig[tid]);
+    delete(@kill_tpid[tid]);
+}
+
+tracepoint:syscalls:sys_enter_tgkill
+{
+    @tgkill_sig[tid] = args->sig;
+    @tgkill_tpid[tid] = args->tgid;
+}
+
+tracepoint:syscalls:sys_exit_tgkill
+{
+    printf("%-15d %-7d %-16s %-6d %-6d %-7d %d\n",
+        elapsed / 1000000, pid, comm, uid, @tgkill_sig[tid], @tgkill_tpid[tid], args->ret);
+    delete(@tgkill_sig[tid]);
+    delete(@tgkill_tpid[tid]);
+}
+
+END
+{
+    clear(@kill_sig);
+    clear(@kill_tpid);
+    clear(@tgkill_sig);
+    clear(@tgkill_tpid);
+}

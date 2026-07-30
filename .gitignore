@@ -16,6 +16,7 @@ gcp_ssh_key*
 *.tfvars
 crash.log
 crash.*.log
+gcp/variables.tf
 
 # --- Logs / run output ---
 *.log

@@ -27,6 +27,23 @@ scrape_configs:
           tool: opensnoop
           __path__: /var/log/ebpf/opensnoop.log
 
+  - job_name: ebpf-killsnoop
+    static_configs:
+      - targets:
+        - localhost
+        labels:
+          job: ebpf-snoop
+          tool: killsnoop
+          __path__: /var/log/ebpf/killsnoop.log
+
+  - job_name: ebpf-syncsnoop
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: ebpf-snoop
+          tool: syncsnoop
+          __path__: /var/log/ebpf/syncsnoop.log
+
   - job_name: systemd-journal
     journal:
       max_age: 12h
@@ -37,5 +54,5 @@ scrape_configs:
       - source_labels: ['__journal__systemd_unit']
         target_label: 'unit'
       - source_labels: ['unit']
-        regex: 'ebpf-(execsnoop|opensnoop)\.service'
+        regex: 'ebpf-(execsnoop|opensnoop|killsnoop|syncsnoop)\.service'
         action: keep

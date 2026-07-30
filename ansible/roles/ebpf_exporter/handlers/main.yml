@@ -19,3 +19,17 @@
     name: ebpf-opensnoop
     state: restarted
   become: true
+
+- name: restart ebpf-killsnoop
+  systemd:
+    daemon_reload: yes
+    name: ebpf-killsnoop
+    state: restarted
+  become: true
+
+- name: restart ebpf-syncsnoop
+  systemd:
+    daemon_reload: yes
+    name: ebpf-syncsnoop
+    state: restarted
+  become: true

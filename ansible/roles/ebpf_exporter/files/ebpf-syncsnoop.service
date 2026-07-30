@@ -1,0 +1,15 @@
+[Unit]
+Description=eBPF syncsnoop tracer (bpftrace -> log file for Loki/Promtail)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/stdbuf -oL /usr/bin/bpftrace /opt/ebpf-snoop-tools/syncsnoop.bt
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/var/log/ebpf/syncsnoop.log
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

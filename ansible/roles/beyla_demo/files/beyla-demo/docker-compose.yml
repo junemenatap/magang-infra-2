@@ -84,7 +84,7 @@ services:
       - loki
 
   ebpf-metrics-exporter:
-    image: ghcr.io/cloudflare/ebpf_exporter:v2.4.0
+    image: ghcr.io/cloudflare/ebpf_exporter:v2.5.1
     container_name: ebpf-metrics-exporter
     privileged: true
     pid: host

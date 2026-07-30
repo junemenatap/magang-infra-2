@@ -132,3 +132,59 @@
     state: started
     daemon_reload: yes
   become: true
+
+- name: Copy killsnoop bpftrace script
+  copy:
+    src: killsnoop.bt
+    dest: /opt/ebpf-snoop-tools/killsnoop.bt
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  notify: restart ebpf-killsnoop
+
+- name: Install killsnoop systemd unit
+  copy:
+    src: ebpf-killsnoop.service
+    dest: /etc/systemd/system/ebpf-killsnoop.service
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: restart ebpf-killsnoop
+
+- name: Ensure killsnoop is enabled and running
+  systemd:
+    name: ebpf-killsnoop
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true
+
+- name: Copy syncsnoop bpftrace script
+  copy:
+    src: syncsnoop.bt
+    dest: /opt/ebpf-snoop-tools/syncsnoop.bt
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  notify: restart ebpf-syncsnoop
+
+- name: Install syncsnoop systemd unit
+  copy:
+    src: ebpf-syncsnoop.service
+    dest: /etc/systemd/system/ebpf-syncsnoop.service
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: restart ebpf-syncsnoop
+
+- name: Ensure syncsnoop is enabled and running
+  systemd:
+    name: ebpf-syncsnoop
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true
