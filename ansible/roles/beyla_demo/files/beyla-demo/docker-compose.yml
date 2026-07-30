@@ -88,7 +88,7 @@ services:
     container_name: ebpf-metrics-exporter
     privileged: true
     pid: host
-    command: ["--config.dir=examples", "--config.names=biolatency,cachestat-pre-kernel-5.16"]
+    command: ["--config.dir=examples", "--config.names=biolatency,cachestat-pre-kernel-5.16,oomkill,ext4dist,tcp-retransmit"]
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - /sys/kernel/debug:/sys/kernel/debug:rw

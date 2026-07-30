@@ -257,6 +257,192 @@
           ]
         }
       }
+    },
+    {
+      "id": 5,
+      "title": "OOM Kills (cumulative)",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Total OOM killer invocations since ebpf-metrics-exporter started. 0 is the expected, healthy state -- this only increments on a real out-of-memory kill.",
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 0,
+        "y": 22
+      },
+      "targets": [
+        {
+          "expr": "sum(ebpf_exporter_oom_kills_total)",
+          "legendFormat": "OOM kills",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "ext4 Latency Heatmap (ext4dist)",
+      "type": "heatmap",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "ext4 read/write/open/sync/getattr latency distribution.",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(ebpf_exporter_ext4_latency_seconds_bucket[1m])) by (le)",
+          "format": "heatmap",
+          "legendFormat": "{{le}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "calculate": false,
+        "yAxis": {
+          "unit": "s",
+          "axisLabel": "latency"
+        },
+        "color": {
+          "mode": "scheme",
+          "scheme": "Spectral",
+          "reverse": false
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "ext4 Latency p95 (by operation)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(ebpf_exporter_ext4_latency_seconds_bucket[5m])) by (le, operation))",
+          "legendFormat": "p95 {{operation}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "TCP Retransmits: Custom Tracer vs Cloudflare exporter (cross-check)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Two independent implementations counting the same kernel event. Labels differ (process-centric vs connection-centric) so this compares aggregate rates, not per-connection matches. Cloudflare's version also splits true retransmits from tail-loss-probes; the custom tracer doesn't distinguish these.",
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(ebpf_tcp_retransmits_total[1m]))",
+          "legendFormat": "Custom TCP tracer (total)",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(ebpf_exporter_tcp_retransmit_ipv4_packets_total{type=\"retransmit\"}[1m]))",
+          "legendFormat": "Cloudflare exporter (retransmit only, IPv4)",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(ebpf_exporter_tcp_retransmit_ipv4_packets_total{type=\"tail_loss_probe\"}[1m]))",
+          "legendFormat": "Cloudflare exporter (tail-loss-probe, IPv4)",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "sum"
+          ]
+        }
+      }
     }
   ],
   "templating": {
