@@ -14,13 +14,14 @@ resource "google_compute_subnetwork" "network_subnet" {
 # VM
 resource "google_compute_instance" "vm_instance" {
     name = var.instance_name
-    machine_type = "e2-medium" 
+    machine_type = "e2-standard-2" 
     zone = "${var.gcp_region}-b"
     tags = ["allow-ssh"]
 
     boot_disk {
         initialize_params {
             image = "debian-cloud/debian-11"
+	    size = 35
         }
     }
 

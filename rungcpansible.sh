@@ -1,8 +1,6 @@
 #!/bin/bash
 
 ip=$1
-vm_name=$2
-vm_zone=$3
 
 ssh-keygen -R $1
 
@@ -12,9 +10,9 @@ eval $(ssh-agent -s)
 
 ssh-add ~/linux_training/hari5/gcp/gcp_ssh_key
 
-gcloud compute instances add-metadata $2 \
+gcloud compute instances add-metadata gcp-vm \
   --metadata ssh-keys="june:$(cat ./gcp/gcp_ssh_key.pub)" \
-  --zone $3
+  --zone us-east4-b
 
 ssh june@$1
 

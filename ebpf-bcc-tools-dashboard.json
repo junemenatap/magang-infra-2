@@ -443,6 +443,500 @@
           ]
         }
       }
+    },
+    {
+      "id": 9,
+      "title": "Softirq Latency p95: Raise->Entry vs Entry->Exit",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Time from softirq raise to CPU pickup (entry), vs time spent actually running (service), per softirq type.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 45
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(ebpf_exporter_softirq_entry_latency_seconds_bucket[5m])) by (le, kind))",
+          "legendFormat": "entry {{kind}}",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(ebpf_exporter_softirq_service_latency_seconds_bucket[5m])) by (le, kind))",
+          "legendFormat": "service {{kind}}",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Softirq Raised vs Serviced Rate (by kind)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 45
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(ebpf_exporter_softirq_raised_total[1m])) by (kind)",
+          "legendFormat": "raised {{kind}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(ebpf_exporter_softirq_serviced_total[1m])) by (kind)",
+          "legendFormat": "serviced {{kind}}",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Per-CPU Softirq Load (percpu-softirq)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Softirq rate per CPU core, all types combined -- uneven lines indicate poor IRQ/RSS balancing across cores.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 53
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(ebpf_exporter_softirqs_total[1m])) by (cpu)",
+          "legendFormat": "cpu {{cpu}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "CFS Throttling Latency p95 (by cgroup)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "How long CFS-bandwidth-limited cgroups (e.g. Docker containers with CPU limits) spend throttled before being allowed to run again.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 53
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(ebpf_exporter_cfs_throttling_seconds_bucket[5m])) by (le, cgroup))",
+          "legendFormat": "{{cgroup}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "Kernel Timer Firings (top 8 functions)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Which kernel functions are firing hrtimers most often -- useful for spotting unexpectedly chatty timer sources.",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 61
+      },
+      "targets": [
+        {
+          "expr": "topk(8, sum(rate(ebpf_exporter_timer_starts_total[1m])) by (function))",
+          "legendFormat": "{{function}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "Accept Queue Latency p95 (by port)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "How long a connection sits in the accept queue before your app calls accept(). Needs real inbound connections to populate.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 69
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(ebpf_exporter_accept_latency_seconds_bucket[5m])) by (le, port))",
+          "legendFormat": "port {{port}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 15,
+      "title": "TCP SYN Backlog Size p95",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Depth of the SYN queue (not a duration -- a count of pending half-open connections). Rising values can precede SYN-flood-style connection drops.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 69
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(ebpf_exporter_tcp_syn_backlog_bucket[5m])) by (le))",
+          "legendFormat": "p95 backlog size",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 16,
+      "title": "UDP Receive Drops (by local port)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "UDP packets dropped because the receive buffer was full -- 0 is the healthy state.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 77
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(ebpf_exporter_udp_fail_queue_rcv_skbs_total[1m])) by (local_port)",
+          "legendFormat": "port {{local_port}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 17,
+      "title": "Memory Shrinker Latency p95 (shrinklat)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "How long the kernel's memory reclaim path (shrink_node) takes -- rises under real memory pressure, adjacent signal to oomkill.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 77
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(ebpf_exporter_shrink_node_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95 shrink_node latency",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 18,
+      "title": "Syscalls (top 10 by name)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 85
+      },
+      "targets": [
+        {
+          "expr": "topk(10, sum(rate(ebpf_exporter_syscalls_total[1m])) by (syscall))",
+          "legendFormat": "{{syscall}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      }
+    },
+    {
+      "id": 19,
+      "title": "Syscall Errors (by errno)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Failed syscalls broken out by errno -- e.g. ENOENT, EACCES. Cross-checkable against opensnoop's own per-event ERR column.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 85
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(ebpf_exporter_syscall_errors_total[1m])) by (errno)",
+          "legendFormat": "{{errno}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
+      }
     }
   ],
   "templating": {

@@ -76,6 +76,23 @@
     state: present
   become: true
 
+# --- NEW TASK ---
+# Everything above this point ran with become:true, so /opt/beyla-demo and
+# everything inside it (including anything docker compose created on the
+# host side, e.g. bind-mounted config dirs) ends up owned by root. That
+# blocks the login user from creating new files/dirs there afterward
+# (e.g. mkdir for test-output directories). Hand ownership back so the
+# directory is fully writable by the login user after every fresh deploy.
+- name: Ensure app directory is owned by the login user, not root
+  ansible.builtin.file:
+    path: /opt/beyla-demo
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: true
+    state: directory
+  become: true
+# --- END NEW TASK ---
+
 - name: Generate some traffic so Beyla/Prometheus have data
   uri:
     url: "http://localhost:8000/order"

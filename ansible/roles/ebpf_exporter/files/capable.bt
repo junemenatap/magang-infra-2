@@ -1,0 +1,51 @@
+#!/usr/bin/env bpftrace
+
+// capable.bt - Trace calls to cap_capable(): every time the kernel checks
+// whether a process holds a specific Linux capability before allowing a
+// privileged operation (CAP_NET_ADMIN, CAP_SYS_ADMIN, CAP_NET_RAW, etc.)
+//
+// Adapted for Debian 11's bpftrace v0.11.3:
+//   - no strftime() -> elapsed time instead
+//   - kprobe args read via arg0/arg1/arg2 (raw positional register
+//     access -- a much smaller surface for the kind of struct-offset
+//     bug we hit on execsnoop's curtask read, since this doesn't
+//     depend on any struct layout at all, just argument order)
+
+BEGIN
+{
+    @cap_names[0] = "CAP_CHOWN"; @cap_names[1] = "CAP_DAC_OVERRIDE";
+    @cap_names[2] = "CAP_DAC_READ_SEARCH"; @cap_names[3] = "CAP_FOWNER";
+    @cap_names[4] = "CAP_FSETID"; @cap_names[5] = "CAP_KILL";
+    @cap_names[6] = "CAP_SETGID"; @cap_names[7] = "CAP_SETUID";
+    @cap_names[8] = "CAP_SETPCAP"; @cap_names[9] = "CAP_LINUX_IMMUTABLE";
+    @cap_names[10] = "CAP_NET_BIND_SERVICE"; @cap_names[11] = "CAP_NET_BROADCAST";
+    @cap_names[12] = "CAP_NET_ADMIN"; @cap_names[13] = "CAP_NET_RAW";
+    @cap_names[14] = "CAP_IPC_LOCK"; @cap_names[15] = "CAP_IPC_OWNER";
+    @cap_names[16] = "CAP_SYS_MODULE"; @cap_names[17] = "CAP_SYS_RAWIO";
+    @cap_names[18] = "CAP_SYS_CHROOT"; @cap_names[19] = "CAP_SYS_PTRACE";
+    @cap_names[20] = "CAP_SYS_PACCT"; @cap_names[21] = "CAP_SYS_ADMIN";
+    @cap_names[22] = "CAP_SYS_BOOT"; @cap_names[23] = "CAP_SYS_NICE";
+    @cap_names[24] = "CAP_SYS_RESOURCE"; @cap_names[25] = "CAP_SYS_TIME";
+    @cap_names[26] = "CAP_SYS_TTY_CONFIG"; @cap_names[27] = "CAP_MKNOD";
+    @cap_names[28] = "CAP_LEASE"; @cap_names[29] = "CAP_AUDIT_WRITE";
+    @cap_names[30] = "CAP_AUDIT_CONTROL"; @cap_names[31] = "CAP_SETFCAP";
+    @cap_names[32] = "CAP_MAC_OVERRIDE"; @cap_names[33] = "CAP_MAC_ADMIN";
+    @cap_names[34] = "CAP_SYSLOG"; @cap_names[35] = "CAP_WAKE_ALARM";
+    @cap_names[36] = "CAP_BLOCK_SUSPEND"; @cap_names[37] = "CAP_AUDIT_READ";
+    @cap_names[38] = "CAP_PERFMON"; @cap_names[39] = "CAP_BPF";
+    @cap_names[40] = "CAP_CHECKPOINT_RESTORE";
+
+    printf("%-15s %-7s %-16s %-6s %-6s %s\n", "TIME(ms)", "PID", "COMM", "UID", "CAP#", "NAME");
+}
+
+kprobe:cap_capable
+{
+    $cap = (int32)arg2;
+    printf("%-15d %-7d %-16s %-6d %-6d %s\n",
+        elapsed / 1000000, pid, comm, uid, $cap, @cap_names[$cap]);
+}
+
+END
+{
+    clear(@cap_names);
+}

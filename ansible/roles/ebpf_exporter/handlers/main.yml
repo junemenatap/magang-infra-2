@@ -33,3 +33,31 @@
     name: ebpf-syncsnoop
     state: restarted
   become: true
+
+- name: Copy capable bpftrace script
+  copy:
+    src: capable.bt
+    dest: /opt/ebpf-snoop-tools/capable.bt
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  notify: restart ebpf-capable
+
+- name: Install capable systemd unit
+  copy:
+    src: ebpf-capable.service
+    dest: /etc/systemd/system/ebpf-capable.service
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: restart ebpf-capable
+
+- name: Ensure capable is enabled and running
+  systemd:
+    name: ebpf-capable
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true
