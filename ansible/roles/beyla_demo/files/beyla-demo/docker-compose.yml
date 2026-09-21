@@ -1,9 +1,9 @@
+---
 version: "3.8"
 
 volumes:
   loki-data:
   es-data:
-
 services:
   frontend-api:
     build: ./frontend-api
@@ -90,14 +90,16 @@ services:
     container_name: ebpf-metrics-exporter
     privileged: true
     pid: host
-    command: ["--config.dir=examples", "--config.names=biolatency,cachestat-pre-kernel-5.16,oomkill,ext4dist,tcp-retransmit,softirq-latency,percpu-softirq,syscalls,cfs-throttling,timers,shrinklat,udp-drops,tcp-syn-backlog,accept-latency"]
+    command:
+      - "--config.dir=examples"
+      - "--config.names=biolatency,cachestat-pre-kernel-5.16,oomkill,ext4dist,tcp-retransmit,softirq-latency,percpu-softirq,syscalls,cfs-throttling,timers,shrinklat,udp-drops,tcp-syn-backlog,accept-latency"
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - /sys/kernel/debug:/sys/kernel/debug:rw
     ports:
-      - "9436:9435"   
+      - "9436:9435"
     restart: unless-stopped
-  
+
   loki:
     image: grafana/loki:3.7.0
     command: ["-config.file=/etc/loki/loki-config.yaml"]
@@ -125,9 +127,9 @@ services:
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false      # dev only, do not use in prod
+      - xpack.security.enabled=false # dev only, do not use in prod
       - xpack.security.http.ssl.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"  # tune to your VM's free RAM
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # tune to your VM's free RAM
     ports:
       - "9200:9200"
     volumes:
@@ -137,7 +139,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
- 
+
   kibana:
     image: docker.elastic.co/kibana/kibana:8.15.0
     container_name: kibana

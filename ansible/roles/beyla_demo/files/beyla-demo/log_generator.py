@@ -19,11 +19,10 @@ Design:
 - After that, anomalies of all five kinds are injected at controlled rates.
 """
 
-import random
 import math
-import json
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
+import random
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 
 random.seed(42)
 
@@ -254,8 +253,8 @@ def generate(config=None, hours_back=None, **overrides):
     if hours_back is not None:
         from dataclasses import replace
         train_fraction = cfg.train_minutes / cfg.total_minutes
-        total_minutes = int(round(hours_back * 60))
-        train_minutes = int(round(total_minutes * train_fraction))
+        total_minutes = round(hours_back * 60)
+        train_minutes = round(total_minutes * train_fraction)
         cfg = replace(cfg, total_minutes=total_minutes, train_minutes=train_minutes)
 
     # These two are read by module-level helpers (make_line, emit_background,
@@ -266,10 +265,10 @@ def generate(config=None, hours_back=None, **overrides):
 
     random.seed(cfg.seed)
     if hours_back is not None:
-        end = datetime.now()
+        end = datetime.now(timezone.utc)
         start = end - timedelta(hours=hours_back)
     else:
-        start = datetime(2026, 8, 4, 0, 0, 0)
+        start = datetime(2026, 8, 4, 0, 0, 0, tzinfo=timezone.utc)
         end = start + timedelta(minutes=cfg.total_minutes)
     train_end = start + timedelta(minutes=cfg.train_minutes)
 
@@ -345,7 +344,7 @@ def generate(config=None, hours_back=None, **overrides):
 
     novel_t0 = train_end + timedelta(minutes=cfg.novel_offset_min)
     novel_t1 = novel_t0 + timedelta(minutes=cfg.novel_duration_min)
-    novel_windows = [(novel_t0, novel_t1, "Firmware update triggered for terminal T{:03d}, rollback=false".format(random.randint(1,5)))]
+    novel_windows = [(novel_t0, novel_t1, f"Firmware update triggered for terminal T{random.randint(1,5):03d}, rollback=false")]
 
     emit_background(train_end, end, burst_windows=burst_windows, novel_windows=novel_windows)
 

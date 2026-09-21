@@ -7,22 +7,22 @@
 # this role stays self-contained and can be applied to a host on its own.
 
 - name: Install bpftrace and pip
-  apt:
+  ansible.builtin.apt:
     name:
       - bpftrace
       - python3-pip
     state: present
-    update_cache: yes
+    update_cache: true
   become: true
 
 - name: Install prometheus_client for the exporter
-  pip:
+  ansible.builtin.pip:
     name: prometheus_client
     executable: pip3
   become: true
 
 - name: Create exporter directory
-  file:
+  ansible.builtin.file:
     path: /opt/ebpf-tcp-observability
     state: directory
     owner: root
@@ -31,7 +31,7 @@
   become: true
 
 - name: Copy exporter files
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "/opt/ebpf-tcp-observability/{{ item }}"
     owner: root
@@ -44,7 +44,7 @@
   notify: restart ebpf-tcp-exporter
 
 - name: Install systemd unit
-  copy:
+  ansible.builtin.copy:
     src: ebpf-tcp-exporter.service
     dest: /etc/systemd/system/ebpf-tcp-exporter.service
     owner: root
@@ -54,22 +54,22 @@
   notify: restart ebpf-tcp-exporter
 
 - name: Ensure exporter is enabled and running
-  systemd:
+  ansible.builtin.systemd:
     name: ebpf-tcp-exporter
-    enabled: yes
+    enabled: true
     state: started
-    daemon_reload: yes
+    daemon_reload: true
   become: true
 
 - name: Create log directory for eBPF snoop tools
-  file:
+  ansible.builtin.file:
     path: /var/log/ebpf
     state: directory
     mode: "0755"
   become: true
 
 - name: Create execsnoop directory
-  file:
+  ansible.builtin.file:
     path: /opt/ebpf-snoop-tools
     state: directory
     owner: root
@@ -78,7 +78,7 @@
   become: true
 
 - name: Copy execsnoop bpftrace script
-  copy:
+  ansible.builtin.copy:
     src: execsnoop.bt
     dest: /opt/ebpf-snoop-tools/execsnoop.bt
     owner: root
@@ -88,7 +88,7 @@
   notify: restart ebpf-execsnoop
 
 - name: Install execsnoop systemd unit
-  copy:
+  ansible.builtin.copy:
     src: ebpf-execsnoop.service
     dest: /etc/systemd/system/ebpf-execsnoop.service
     owner: root
@@ -98,15 +98,15 @@
   notify: restart ebpf-execsnoop
 
 - name: Ensure execsnoop is enabled and running
-  systemd:
+  ansible.builtin.systemd:
     name: ebpf-execsnoop
-    enabled: yes
+    enabled: true
     state: started
-    daemon_reload: yes
+    daemon_reload: true
   become: true
 
 - name: Copy opensnoop bpftrace script
-  copy:
+  ansible.builtin.copy:
     src: opensnoop.bt
     dest: /opt/ebpf-snoop-tools/opensnoop.bt
     owner: root
@@ -116,7 +116,7 @@
   notify: restart ebpf-opensnoop
 
 - name: Install opensnoop systemd unit
-  copy:
+  ansible.builtin.copy:
     src: ebpf-opensnoop.service
     dest: /etc/systemd/system/ebpf-opensnoop.service
     owner: root
@@ -126,15 +126,15 @@
   notify: restart ebpf-opensnoop
 
 - name: Ensure opensnoop is enabled and running
-  systemd:
+  ansible.builtin.systemd:
     name: ebpf-opensnoop
-    enabled: yes
+    enabled: true
     state: started
-    daemon_reload: yes
+    daemon_reload: true
   become: true
 
 - name: Copy killsnoop bpftrace script
-  copy:
+  ansible.builtin.copy:
     src: killsnoop.bt
     dest: /opt/ebpf-snoop-tools/killsnoop.bt
     owner: root
@@ -144,7 +144,7 @@
   notify: restart ebpf-killsnoop
 
 - name: Install killsnoop systemd unit
-  copy:
+  ansible.builtin.copy:
     src: ebpf-killsnoop.service
     dest: /etc/systemd/system/ebpf-killsnoop.service
     owner: root
@@ -154,15 +154,15 @@
   notify: restart ebpf-killsnoop
 
 - name: Ensure killsnoop is enabled and running
-  systemd:
+  ansible.builtin.systemd:
     name: ebpf-killsnoop
-    enabled: yes
+    enabled: true
     state: started
-    daemon_reload: yes
+    daemon_reload: true
   become: true
 
 - name: Copy syncsnoop bpftrace script
-  copy:
+  ansible.builtin.copy:
     src: syncsnoop.bt
     dest: /opt/ebpf-snoop-tools/syncsnoop.bt
     owner: root
@@ -172,7 +172,7 @@
   notify: restart ebpf-syncsnoop
 
 - name: Install syncsnoop systemd unit
-  copy:
+  ansible.builtin.copy:
     src: ebpf-syncsnoop.service
     dest: /etc/systemd/system/ebpf-syncsnoop.service
     owner: root
@@ -182,9 +182,9 @@
   notify: restart ebpf-syncsnoop
 
 - name: Ensure syncsnoop is enabled and running
-  systemd:
+  ansible.builtin.systemd:
     name: ebpf-syncsnoop
-    enabled: yes
+    enabled: true
     state: started
-    daemon_reload: yes
+    daemon_reload: true
   become: true

@@ -27,11 +27,10 @@ Usage:
 import argparse
 import json
 from collections import Counter, defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
-
 from log_generator import generate  # your existing generator, unchanged
 
 
@@ -92,7 +91,7 @@ def build_answer_sheet_text(answer_key, meta, index_name):
     lines = []
     lines.append("=" * 78)
     lines.append(f"ANSWER SHEET - {index_name}")
-    lines.append(f"Generated: {datetime.now().isoformat(timespec='seconds')}")
+    lines.append(f"Generated: {datetime.now(timezone.utc).isoformat(timespec='seconds')}")
     lines.append(f"Train window ends: {meta['train_end_ts']}  "
                  f"(anomalies only exist after this timestamp)")
     lines.append(f"Total log lines: {meta.get('total_lines', 'n/a')}")
@@ -158,7 +157,7 @@ def main():
                           "original fixed 2026-08-04 date instead.")
     args = ap.parse_args()
 
-    run_tag = args.run_tag or datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_tag = args.run_tag or datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
     hours_back = args.hours_back if args.hours_back and args.hours_back > 0 else None
     lines, meta = generate(hours_back=hours_back)

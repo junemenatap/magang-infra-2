@@ -1,37 +1,41 @@
 ---
 - name: Install prerequisites for Docker's apt repo
-  apt:
+  ansible.builtin.apt:
     name:
       - ca-certificates
       - curl
       - gnupg
     state: present
-    update_cache: yes
+    update_cache: true
   become: true
 
 - name: Create keyring directory
-  file:
+  ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory
     mode: "0755"
   become: true
 
 - name: Add Docker's official GPG key
-  get_url:
+  ansible.builtin.get_url:
     url: https://download.docker.com/linux/debian/gpg
     dest: /etc/apt/keyrings/docker.asc
     mode: "0644"
   become: true
 
 - name: Add Docker's apt repository
-  apt_repository:
-    repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ 'amd64' if ansible_architecture == 'x86_64'
+      else ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/debian
+      {{ ansible_distribution_release }} stable
     state: present
     filename: docker
   become: true
 
 - name: Install Docker Engine and Compose plugin
-  apt:
+  ansible.builtin.apt:
     name:
       - docker-ce
       - docker-ce-cli
@@ -39,32 +43,32 @@
       - docker-buildx-plugin
       - docker-compose-plugin
     state: present
-    update_cache: yes
+    update_cache: true
   become: true
 
 - name: Ensure Docker service is running
-  service:
+  ansible.builtin.service:
     name: docker
     state: started
     enabled: true
   become: true
 
 - name: Create deployment directory
-  file:
+  ansible.builtin.file:
     path: /opt/beyla-demo
     state: directory
     mode: "0755"
   become: true
 
 - name: Create log dir for eBPF snoopers
-  file:
+  ansible.builtin.file:
     path: /var/log/ebpf
     state: directory
     mode: "0755"
   become: true
 
 - name: Copy Beyla demo project files
-  copy:
+  ansible.builtin.copy:
     src: beyla-demo/
     dest: /opt/beyla-demo/
     mode: preserve
@@ -94,7 +98,7 @@
 # --- END NEW TASK ---
 
 - name: Generate some traffic so Beyla/Prometheus have data
-  uri:
+  ansible.builtin.uri:
     url: "http://localhost:8000/order"
     method: GET
     status_code: [200, 500]
@@ -102,16 +106,16 @@
   become: true
 
 - name: Install networking utilities
-  apt:
+  ansible.builtin.apt:
     name:
       - dnsutils
       - wget
     state: present
-    update_cache: yes
+    update_cache: true
   become: true
 
 - name: Install eBPF tracing tools
-  apt:
+  ansible.builtin.apt:
     name:
       - bpfcc-tools
       - "linux-headers-{{ ansible_kernel }}"

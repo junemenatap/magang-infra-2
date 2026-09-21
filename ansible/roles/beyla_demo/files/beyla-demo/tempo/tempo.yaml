@@ -1,3 +1,4 @@
+---
 server:
   http_listen_port: 3200
 
@@ -34,7 +35,6 @@ overrides:
   defaults:
     metrics_generator:
       processors: [local-blocks]
-
 compactor:
   compaction:
     block_retention: 1h

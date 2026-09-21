@@ -1,3 +1,4 @@
+---
 metrics:
   counters:
     - name: page_cache_ops_total
