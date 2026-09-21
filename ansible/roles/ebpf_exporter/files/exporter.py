@@ -18,13 +18,13 @@ Run:
     sudo python3 exporter.py
 """
 
-import subprocess
-import threading
 import logging
 import signal
+import subprocess
 import sys
+import threading
 
-from prometheus_client import start_http_server, Counter, Histogram
+from prometheus_client import Counter, Histogram, start_http_server
 
 logging.basicConfig(
     level=logging.INFO,
@@ -75,17 +75,17 @@ def handle_line(line: str) -> None:
             log.info("bpftrace probes attached and running")
 
         elif tag == "CONNECT_LATENCY":
-            _, pid, comm, latency_ns, daddr, dport = parts
+            _, _pid, comm, latency_ns, daddr, dport = parts
             CONNECT_LATENCY.labels(comm=comm, daddr=daddr, dport=dport).observe(
                 int(latency_ns) / 1e9
             )
 
         elif tag == "RETRANSMIT":
-            _, pid, comm, daddr, dport = parts
+            _, _pid, comm, daddr, dport = parts
             RETRANSMITS_TOTAL.labels(comm=comm, daddr=daddr, dport=dport).inc()
 
         elif tag == "CONN_CLOSE":
-            _, pid, comm, daddr, dport = parts
+            _, _pid, comm, daddr, dport = parts
             CONN_CLOSE_TOTAL.labels(comm=comm, daddr=daddr, dport=dport).inc()
 
         else:

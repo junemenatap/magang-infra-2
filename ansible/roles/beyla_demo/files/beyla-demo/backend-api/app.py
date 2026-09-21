@@ -1,5 +1,5 @@
+import asyncio
 import random
-import time
 
 from fastapi import FastAPI, Response
 
@@ -13,7 +13,7 @@ async def get_inventory(response: Response):
     """Returns fake stock data with variable latency and occasional 500s,
     so the Beyla/Grafana dashboard has something interesting to show."""
     delay = random.lognormvariate(-2, 1.5)
-    time.sleep(delay)
+    await asyncio.sleep(delay)
 
     if random.random() < 0.02:
         response.status_code = 500
